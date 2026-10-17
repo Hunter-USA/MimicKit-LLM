@@ -3,6 +3,8 @@ from mimickit.learning import agent_builder
 import gymnasium.spaces as spaces
 import numpy as np
 from mimickit.learning.environment_view import EnvironmentView
+import torch
+import learning.ase_agent as ase_agent
 
 class ASEHLCAgent(ppo_agent.PPOAgent):
     def __init__(self, config, env, device):
@@ -32,4 +34,19 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
 
     def _build_llc(self):
         self._llc_agent = None
+
+        llc_state = torch.load(self._llc_model_file, map_location=self._device)
+        self._llc_obs_dim = llc_state["_obs_norm._mean"].shape[-1]
+
+        llc_obs_space = spaces.Box(low=-np.inf, high=np.inf, shape=[self._llc_obs_dim], dtype=np.float32)
+        llc_env = EnvironmentView(self._task_env, obs_space=llc_obs_space)
+        
+        llc_agent = ase_agent.ASEAgent(config=self._llc_config, env=llc_env, device=self._device)
+        llc_agent.load(self._llc_model_file)
+
+        llc_agent.eval()
+        for p in llc_agent.parameters():
+            p.requires_grad_(False)
+
+        self.__dict__["_llc_agent"] = llc_agent
         return
