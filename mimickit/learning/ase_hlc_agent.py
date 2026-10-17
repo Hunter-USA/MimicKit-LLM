@@ -50,6 +50,7 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
             p.requires_grad_(False)
 
         self.__dict__["_llc_agent"] = llc_agent
+        self._check_llc_sizes(llc_state)
         return
 
     def _check_llc_sizes(self, llc_state):
