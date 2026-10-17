@@ -1,10 +1,11 @@
 import learning.ppo_agent as ppo_agent
-from mimickit.learning import agent_builder
+import learning.agent_builder as agent_builder
 import gymnasium.spaces as spaces
 import numpy as np
-from mimickit.learning.environment_view import EnvironmentView
+from learning.environment_view import EnvironmentView
 import torch
 import learning.ase_agent as ase_agent
+from util.logger import Logger
 
 class ASEHLCAgent(ppo_agent.PPOAgent):
     def __init__(self, config, env, device):
@@ -50,3 +51,26 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
 
         self.__dict__["_llc_agent"] = llc_agent
         return
+
+    def _check_llc_sizes(self, llc_state):
+        task_obs_dim = self._task_env.get_obs_space().shape[-1]
+        task_a_dim = self._task_env.get_action_space().shape[-1]
+        task_disc_dim = self._task_env.get_disc_obs_space().shape[-1]
+
+        llc_a_dim = llc_state["_a_norm._mean"].shape[-1]
+        llc_disc_dim = llc_state["_disc_obs_norm._mean"].shape[-1]
+
+        assert self._llc_obs_dim < task_obs_dim, \
+            "LLC obs size {} must be smaller than task obs size {}".format(self._llc_obs_dim, task_obs_dim)
+        assert llc_a_dim == task_a_dim, \
+            "LLC action size {} != env action size {}".format(llc_a_dim, task_a_dim)
+        assert llc_disc_dim == task_disc_dim, \
+            "LLC disc obs size {} != env disc obs size {}".format(llc_disc_dim, task_disc_dim)
+
+        Logger.print("LLC loaded: obs {} + task obs {} = {}, actions {}, disc obs {}".format(
+            self._llc_obs_dim, task_obs_dim - self._llc_obs_dim, task_obs_dim, llc_a_dim, llc_disc_dim))
+        return
+
+    def _extract_llc_obs(self, obs):
+        # Task envs append the task observation after the character observation.
+        return obs[..., :self._llc_obs_dim]

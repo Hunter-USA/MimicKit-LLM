@@ -7,15 +7,15 @@ class EnvironmentView:
         self._view_obs_space = obs_space
         self._view_action_space = action_space
 
-    def get_observation_space(self):
+    def get_obs_space(self):
         if self._view_obs_space is not None:
             return self._view_obs_space
-        return self._wrapped_env.observation_space
+        return self._wrapped_env.get_obs_space()
 
     def get_action_space(self):
         if self._view_action_space is not None:
             return self._view_action_space
-        return self._wrapped_env.action_space
+        return self._wrapped_env.get_action_space()
 
     def __getattr__(self, name):
         if name == "_wrapped_env":
