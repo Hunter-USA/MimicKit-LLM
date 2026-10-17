@@ -22,6 +22,14 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
         self._build_llc()
         return
 
+    def _load_params(self, config):
+        super()._load_params(config)
+        self._llc_model_file = config["llc_model_file"]
+        self._llc_steps = config["llc_steps"]
+        self._task_reward_weight = config["task_reward_weight"]
+        self._style_reward_weight = config["style_reward_weight"]
+        return
+
     def _build_llc(self):
         self._llc_agent = None
         return
