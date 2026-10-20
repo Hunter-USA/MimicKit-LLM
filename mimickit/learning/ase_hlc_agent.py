@@ -81,6 +81,15 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
         z_norm = torch.clamp(z_raw, -1.0, 1.0)
         return torch.nn.functional.normalize(z_norm, dim=-1)
 
+    def _compute_llc_action(self, obs, z):
+        llc = self._llc_agent
+        with torch.no_grad():
+            llc_obs = self._extract_llc_obs(obs)
+            norm_obs = llc._obs_norm.normalize(llc_obs)
+            norm_a = llc._model.eval_actor(norm_obs, z).mode
+            a = llc._a_norm.unnormalize(norm_a)
+        return a
+
     def _step_env(self, action):
         z = self.normalize_latent(action)
 
