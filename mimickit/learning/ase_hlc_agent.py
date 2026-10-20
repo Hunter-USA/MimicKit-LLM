@@ -96,6 +96,11 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
         norm_disc_obs = llc._disc_obs_norm.normalize(disc_obs)
         return llc._calc_disc_rewards(norm_disc_obs)
 
+    def _record_data_post_step(self, next_obs, reward, done, next_info):
+        super()._record_data_post_step(next_obs, reward, done, next_info)
+        self._exp_buffer.record("style_reward", next_info["style_reward"])
+        return
+
     def _step_env(self, action):
         z = self._normalize_latent(action)
 
