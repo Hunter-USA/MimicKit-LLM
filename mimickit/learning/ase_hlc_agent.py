@@ -92,7 +92,9 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
         return a
 
     def _calc_style_reward(self, disc_obs):
-        return torch.zeros(disc_obs.shape[0], device=self._device)
+        llc = self._llc_agent
+        norm_disc_obs = llc._disc_obs_norm.normalize(disc_obs)
+        return llc._calc_disc_rewards(norm_disc_obs)
 
     def _step_env(self, action):
         z = self._normalize_latent(action)
