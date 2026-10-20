@@ -152,3 +152,11 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
     def _update_sample_count(self):
         hlc_sample_count = super()._update_sample_count()
         return hlc_sample_count * self._llc_steps
+
+    def _log_train_info(self, train_info, test_info, env_diag_info, start_time):
+        test_info = dict(test_info)
+        for d in (train_info, test_info):
+            d["mean_ep_len"] = d["mean_ep_len"] * self._llc_steps
+            d["mean_return"] = d["mean_return"] * self._llc_steps
+        super()._log_train_info(train_info, test_info, env_diag_info, start_time)
+        return
