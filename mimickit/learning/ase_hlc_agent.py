@@ -75,3 +75,24 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
     def _extract_llc_obs(self, obs):
         # Task envs append the task observation after the character observation.
         return obs[..., :self._llc_obs_dim]
+
+    def _normalize_latent(self, z_raw):
+        # Normalize the latent vector to be in the range [-1, 1]
+        z_norm = torch.clamp(z_raw, -1.0, 1.0)
+        return torch.nn.functional.normalize(z_norm, dim=-1)
+
+    def _step_env(self, action):
+        z = self.normalize_latent(action)
+
+        num_envs = self.get_num_envs()
+        task_reward = torch.zeros(num_envs, device=self._device)
+        style_reward = torch.zeros(num_envs, device=self._device)
+        done = None
+
+        obs = self._curr_obs
+        for i in range(self._llc_steps):
+            pass
+
+        
+        out_info = None
+        return obs, task_reward, done, out_info
