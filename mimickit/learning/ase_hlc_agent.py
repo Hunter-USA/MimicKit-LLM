@@ -148,4 +148,7 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
         out_info = dict(info)
         out_info["style_reward"] = style_reward
         return obs, task_reward, done, out_info
-    
+
+    def _update_sample_count(self):
+        hlc_sample_count = super()._update_sample_count()
+        return hlc_sample_count * self._llc_steps
