@@ -6,6 +6,7 @@ from learning.environment_view import EnvironmentView
 import torch
 import learning.ase_agent as ase_agent
 from util.logger import Logger
+import envs.base_env as base_env
 
 class ASEHLCAgent(ppo_agent.PPOAgent):
     def __init__(self, config, env, device):
@@ -90,8 +91,11 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
             a = llc._a_norm.unnormalize(norm_a)
         return a
 
+    def _calc_style_reward(self, disc_obs):
+        return torch.zeros(disc_obs.shape[0], device=self._device)
+
     def _step_env(self, action):
-        z = self.normalize_latent(action)
+        z = self._normalize_latent(action)
 
         num_envs = self.get_num_envs()
         task_reward = torch.zeros(num_envs, device=self._device)
@@ -100,8 +104,23 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
 
         obs = self._curr_obs
         for i in range(self._llc_steps):
-            pass
+            llc_action = self._compute_llc_action(obs, z)
+            obs, reward, d, info = self._env.step(llc_action)
 
+            if done is None:
+                done = torch.full_like(d, base_env.DoneFlags.NULL.value)
+            alive = (done == base_env.DoneFlags.NULL.value)
+
+            task_reward = torch.where(alive, reward, torch.zeros_like(reward))
+            style_reward = torch.where(alive, self._calc_style_reward(info["disc_obs"]), torch.zeros_like(reward))
+
+
+            done = torch.where(alive, d, done)
+
+        task_reward /= self._llc_steps
+        style_reward /= self._llc_steps
         
-        out_info = None
+        out_info = dict(info)
+        out_info["style_reward"] = style_reward
         return obs, task_reward, done, out_info
+    
