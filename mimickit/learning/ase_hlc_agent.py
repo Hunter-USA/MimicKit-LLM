@@ -101,6 +101,24 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
         self._exp_buffer.record("style_reward", next_info["style_reward"])
         return
 
+    def _build_train_data(self):
+
+        task_reward = self._exp_buffer.get_data("reward").clone()
+        style_reward = self._exp_buffer.get_data("style_reward")
+
+        reward = self._task_reward_weight * task_reward + self._style_reward_weight * style_reward
+        self._exp_buffer.set_data("reward", reward)
+
+        info = super()._build_train_data()
+
+        task_std, task_mean = torch.std_mean(task_reward)
+        style_std, style_mean = torch.std_mean(style_reward)
+        info["task_reward_mean"] = task_mean
+        info["task_reward_std"] = task_std
+        info["style_reward_mean"] = style_mean
+        info["style_reward_std"] = style_std
+        return info
+
     def _step_env(self, action):
         z = self._normalize_latent(action)
 
