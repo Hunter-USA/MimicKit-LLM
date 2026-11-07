@@ -35,3 +35,9 @@ reward_vel_scale: 0.01
 reward_root_pose_scale: 5.0
 reward_root_vel_scale: 1.0
 reward_key_pos_scale: 10.0
+
+enable_metrics: True
+metric_reach_dist: 0.5        # m, Location
+metric_skip_time: 1.0         # s, Steering
+metric_vel_tol: 0.3           # m/s, Steering
+metric_face_tol_deg: 30.0     # degrees, Steering
