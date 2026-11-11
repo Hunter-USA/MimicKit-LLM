@@ -38,6 +38,8 @@ class TaskLocationMetricEnv(task_location_env.TaskLocationEnv):
         self._diagnostics["loc_segs_fell"] = self._num_fell.clone()
         self._diagnostics["loc_segs_excl_near"] = self._num_excl_near.clone()
         self._diagnostics["loc_segs_excl_time"] = self._num_excl_time.clone()
+        self._diagnostics["loc_eps"] = self._num_eps.clone()
+        self._diagnostics["loc_fall_rate"] = self._num_eps_fell.float() / self._num_eps.clamp_min(1).float()
 
         diag = super().record_diagnostics()
         return diag
@@ -67,6 +69,8 @@ class TaskLocationMetricEnv(task_location_env.TaskLocationEnv):
         self._num_fell = torch.zeros([], device=device, dtype=torch.long)
         self._num_excl_near = torch.zeros([], device=device, dtype=torch.long)
         self._num_excl_time = torch.zeros([], device=device, dtype=torch.long)
+        self._num_eps = torch.zeros([], device=device, dtype=torch.long)
+        self._num_eps_fell = torch.zeros([], device=device, dtype=torch.long)
         return
 
     def _reset_metric_trackers(self):
@@ -76,6 +80,8 @@ class TaskLocationMetricEnv(task_location_env.TaskLocationEnv):
         self._num_fell.zero_()
         self._num_excl_near.zero_()
         self._num_excl_time.zero_()
+        self._num_eps.zero_()
+        self._num_eps_fell.zero_()
         return
 
     def _reset_task(self, env_ids):
@@ -127,6 +133,11 @@ class TaskLocationMetricEnv(task_location_env.TaskLocationEnv):
 
     def _reset_envs(self, env_ids):
         if (len(env_ids) > 0):
+            # per-episode fall rate, forced resets (no end reason) are not counted
+            ep_reason = self._ep_end_reason[env_ids]
+            self._num_eps += (ep_reason != base_env.DoneFlags.NULL.value).sum()
+            self._num_eps_fell += (ep_reason == base_env.DoneFlags.FAIL.value).sum()
+
             open_ids = env_ids[self._seg_active[env_ids]]
             if (len(open_ids) > 0):
                 reason = self._ep_end_reason[open_ids]
