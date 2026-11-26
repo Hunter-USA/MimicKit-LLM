@@ -1,0 +1,7 @@
+--num_envs 4096
+
+--engine_config data/engines/isaac_lab_engine.yaml
+--env_config data/envs/ase_hlc_steering_humanoid_sword_shield_env.yaml
+--agent_config data/agents/ase_task_humanoid_agent.yaml
+
+--out_dir output/ase_hlc_steering
