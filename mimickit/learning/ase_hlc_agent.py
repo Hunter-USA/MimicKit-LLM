@@ -78,9 +78,8 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
         return obs[..., :self._llc_obs_dim]
 
     def _normalize_latent(self, z_raw):
-        # Normalize the latent vector to be in the range [-1, 1]
-        z_norm = torch.clamp(z_raw, -1.0, 1.0)
-        return torch.nn.functional.normalize(z_norm, dim=-1)
+        # Project the latent vector onto the unit hypersphere
+        return torch.nn.functional.normalize(z_raw, dim=-1)
 
     def _compute_llc_action(self, obs, z):
         llc = self._llc_agent
@@ -126,6 +125,7 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
         task_reward = torch.zeros(num_envs, device=self._device)
         style_reward = torch.zeros(num_envs, device=self._device)
         done = None
+        next_obs = None
 
         obs = self._curr_obs
         for i in range(self._llc_steps):
@@ -136,18 +136,25 @@ class ASEHLCAgent(ppo_agent.PPOAgent):
                 done = torch.full_like(d, base_env.DoneFlags.NULL.value)
             alive = (done == base_env.DoneFlags.NULL.value)
 
-            task_reward = torch.where(alive, reward, torch.zeros_like(reward))
-            style_reward = torch.where(alive, self._calc_style_reward(info["disc_obs"]), torch.zeros_like(reward))
+            task_reward += torch.where(alive, reward, torch.zeros_like(reward))
+            style_reward += torch.where(alive, self._calc_style_reward(info["disc_obs"]), torch.zeros_like(reward))
 
+            # Keep the obs from the step an env terminated on, since the env is not reset until after the HLC step
+            if next_obs is None:
+                next_obs = obs.clone()
+            else:
+                next_obs = torch.where(alive.unsqueeze(-1), obs, next_obs)
 
             done = torch.where(alive, d, done)
+            if torch.all(done != base_env.DoneFlags.NULL.value):
+                break
 
         task_reward /= self._llc_steps
         style_reward /= self._llc_steps
-        
+
         out_info = dict(info)
         out_info["style_reward"] = style_reward
-        return obs, task_reward, done, out_info
+        return next_obs, task_reward, done, out_info
 
     def _update_sample_count(self):
         hlc_sample_count = super()._update_sample_count()

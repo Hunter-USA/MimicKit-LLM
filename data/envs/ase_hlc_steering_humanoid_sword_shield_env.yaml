@@ -11,6 +11,7 @@ enable_phase_obs: False
 enable_tar_obs: False
 num_disc_obs_steps: 10
 rand_reset: True
+visualize_ref_char: False
 
 ref_char_offset: [2.0, 0.0, 0.0] # m
 init_pose: [0, 0, 0.703, -0.033, 0.084, -0.857, -0.033, 0.719, -0.048, -0.271, -0.487, 0.792, 0.836, -0.401, 0.6781, 1.092, -0.208, 0.195, 0.024, -0.497, -0.201, -0.332, -1.726, -0.436, -0.573, -0.192, 1.085, 0.460, -0.460, 0.028, 0.570, -0.906, 0.413, 1.056, -0.292, -0.110,-0.037]
@@ -46,6 +47,6 @@ reward_steering_face_w: 0.3
 reward_steering_vel_scale: 2.0
 
 enable_metrics: True
-metric_skip_time: 1.0        # s, ignore the first second after each new command
-metric_vel_tol: 0.3          # m/s
-metric_face_tol_deg: 30.0    # degrees
+metric_skip_time: 1.0         # s
+metric_vel_tol: 0.3           # m/s
+metric_face_tol_deg: 30.0     # degrees

@@ -44,7 +44,7 @@ class TaskSteeringMetricEnv(task_steering_env.TaskSteeringEnv):
         self._diagnostics["steer_vel_ok_rate"] = tol_rates[0].clone()
         self._diagnostics["steer_face_ok_rate"] = tol_rates[1].clone()
         self._diagnostics["steer_both_ok_rate"] = tol_rates[2].clone()
-        self._diagnostics["steer_fall_rate"] = self._num_falls.float() / num_eps
+        self._diagnostics["steer_fall_rate"] = self._num_eps_fell.float() / num_eps
         self._diagnostics["steer_eps"] = self._num_eps.clone()
 
         diag = super().record_diagnostics()
@@ -71,7 +71,7 @@ class TaskSteeringMetricEnv(task_steering_env.TaskSteeringEnv):
 
         # running totals, kept on device to avoid per-step syncs
         self._num_eps = torch.zeros([], device=device, dtype=torch.long)
-        self._num_falls = torch.zeros([], device=device, dtype=torch.long)
+        self._num_eps_fell = torch.zeros([], device=device, dtype=torch.long)
         return
 
     def _reset_metric_trackers(self):
@@ -79,7 +79,7 @@ class TaskSteeringMetricEnv(task_steering_env.TaskSteeringEnv):
         self._face_err_tracker.reset()
         self._tol_tracker.reset()
         self._num_eps.zero_()
-        self._num_falls.zero_()
+        self._num_eps_fell.zero_()
         return
 
     def _reset_task(self, env_ids):
@@ -130,7 +130,7 @@ class TaskSteeringMetricEnv(task_steering_env.TaskSteeringEnv):
             # forced resets (no end reason) are not counted as episodes
             reason = self._ep_end_reason[env_ids]
             self._num_eps += (reason != base_env.DoneFlags.NULL.value).sum()
-            self._num_falls += (reason == base_env.DoneFlags.FAIL.value).sum()
+            self._num_eps_fell += (reason == base_env.DoneFlags.FAIL.value).sum()
 
             self._ep_ended[env_ids] = False
             self._ep_end_reason[env_ids] = base_env.DoneFlags.NULL.value
